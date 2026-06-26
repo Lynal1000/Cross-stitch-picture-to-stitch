@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2B3A4A">
+<title>Cross Stitch My Picture</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --linen:#EDE6D6;
+    --cream:#FAF7F0;
+    --navy:#2B3A4A;
+    --thread-red:#B5443A;
+    --grid-grey:#C9C2B0;
+    --grid-grey-dark:#9B9382;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--linen);
+    color:var(--navy);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:40px;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px;}
+
+  header{
+    padding:28px 16px 20px;
+    text-align:center;
+  }
+  header h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:0.3px;
+    margin:0 0 4px;
+    color:var(--navy);
+  }
+  header h1 .x{
+    display:inline-block;
+    color:var(--thread-red);
+    font-weight:400;
+    margin:0 2px;
+  }
+  header p{
+    margin:0;
+    font-size:14px;
+    color:#6b6357;
+    font-style:italic;
+  }
+
+  .card{
+    background:var(--cream);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(43,58,74,0.08);
+    border:1px solid #E4DDCC;
+  }
+
+  .upload-zone{
+    border:2px dashed var(--grid-grey-dark);
+    border-radius:8px;
+    padding:36px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-zone:hover, .upload-zone.drag{
+    border-color:var(--thread-red);
+    background:#FFF9F4;
+  }
+  .upload-zone svg{width:36px;height:36px;color:var(--grid-grey-dark);margin-bottom:8px;}
+  .upload-zone .label{font-weight:600;font-size:15px;color:var(--navy);}
+  .upload-zone .sub{font-size:13px;color:#857c6c;margin-top:2px;}
+  input[type=file]{display:none;}
+
+  .preview-photo{
+    width:100%;
+    border-radius:8px;
+    display:block;
+    margin-bottom:12px;
+  }
+
+  .control-row{margin-bottom:18px;}
+  .control-row:last-child{margin-bottom:0;}
+  .control-label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+    color:var(--navy);
+  }
+  .control-label .val{
+    font-weight:400;
+    color:var(--thread-red);
+    font-variant-numeric:tabular-nums;
+  }
+  .control-help{font-size:12.5px;color:#857c6c;margin-top:4px;line-height:1.4;}
+
+  input[type=range]{
+    width:100%;
+    -webkit-appearance:none;
+    height:6px;
+    border-radius:3px;
+    background:var(--grid-grey);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:24px;height:24px;
+    border-radius:50%;
+    background:var(--thread-red);
+    border:3px solid var(--cream);
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);
+    cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:24px;height:24px;border-radius:50%;
+    background:var(--thread-red);border:3px solid var(--cream);
+    box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;
+  }
+
+  .btn{
+    display:block;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:var(--thread-red);
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn.secondary{
+    background:transparent;
+    color:var(--navy);
+    border:1.5px solid var(--grid-grey-dark);
+  }
+
+  #patternCanvas{
+    width:100%;
+    border-radius:6px;
+    display:block;
+    image-rendering:pixelated;
+    background:#fff;
+    border:1px solid #E4DDCC;
+  }
+
+  .section-title{
+    font-family:Georgia,serif;
+    font-size:18px;
+    font-weight:700;
+    margin:0 0 4px;
+  }
+  .section-sub{font-size:13px;color:#857c6c;margin:0 0 14px;}
+
+  .stat-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .stat{
+    flex:1;
+    background:var(--linen);
+    border-radius:8px;
+    padding:10px 12px;
+    text-align:center;
+  }
+  .stat .num{font-size:20px;font-weight:700;color:var(--navy);font-family:Georgia,serif;}
+  .stat .lbl{font-size:11px;color:#857c6c;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+
+  .thread-list{list-style:none;margin:0;padding:0;}
+  .thread-list li{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 0;
+    border-bottom:1px solid #E4DDCC;
+  }
+  .thread-list li:last-child{border-bottom:none;}
+  .swatch{
+    width:32px;height:32px;
+    border-radius:6px;
+    flex-shrink:0;
+    border:1px solid rgba(0,0,0,0.12);
+  }
+  .thread-info{flex:1;min-width:0;}
+  .thread-code{font-weight:700;font-size:14px;color:var(--navy);}
+  .thread-name{font-size:12.5px;color:#857c6c;}
+  .thread-amount{
+    text-align:right;
+    font-size:13px;
+    color:var(--navy);
+    font-variant-numeric:tabular-nums;
+    flex-shrink:0;
+  }
+  .thread-amount .small{display:block;font-size:11px;color:#857c6c;}
+
+  .hidden{display:none !important;}
+  .spinner{
+    width:20px;height:20px;
+    border:3px solid rgba(255,255,255,0.4);
+    border-top-color:white;
+    border-radius:50%;
+    animation:spin 0.7s linear infinite;
+    display:inline-block;
+    vertical-align:middle;
+    margin-right:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  footer{
+    text-align:center;
+    font-size:12px;
+    color:#A39B8A;
+    padding:20px 16px 0;
+  }
+
+  .install-banner{
+    background:var(--navy);
+    color:var(--cream);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    font-size:13.5px;
+    line-height:1.5;
+    display:none;
+  }
+  .install-banner.show{display:block;}
+  .install-banner b{color:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Cross Stitch<span class="x">×</span>My Picture</h1>
+    <p>Turn any photo into a cross-stitch pattern</p>
+  </header>
+
+  <div class="install-banner" id="installBanner">
+    Add this to your home screen: tap the <b>Share</b> button, then <b>"Add to Home Screen."</b> It'll work like any other app from then on — even offline.
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div class="card" id="uploadCard">
+    <div class="section-title">1. Choose a photo</div>
+    <div class="section-sub">A clear, well-lit photo with a simple background works best.</div>
+    <label class="upload-zone" id="dropZone" for="fileInput">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="label">Tap to choose a photo</div>
+      <div class="sub">or drag one in</div>
+    </label>
+    <input type="file" id="fileInput" accept="image/*">
+    <img id="photoPreview" class="preview-photo hidden">
+  </div>
+
+  <!-- Step 2: Settings -->
+  <div class="card hidden" id="settingsCard">
+    <div class="section-title">2. Set the detail level</div>
+    <div class="section-sub">Bigger and more colourful means more detail — and more thread to buy.</div>
+
+    <div class="control-row">
+      <div class="control-label">
+        <span>Pattern width</span>
+        <span class="val" id="widthVal">100 stitches</span>
+      </div>
+      <input type="range" id="widthSlider" min="30" max="220" value="100" step="5">
+      <div class="control-help" id="sizeHelp"></div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-label">
+        <span>Thread colours</span>
+        <span class="val" id="colorVal">30 colours</span>
+      </div>
+      <input type="range" id="colorSlider" min="6" max="60" value="30" step="2">
+      <div class="control-help">Fewer colours is simpler to stitch and cheaper. More colours looks closer to the original photo.</div>
+    </div>
+
+    <button class="btn" id="generateBtn">Generate pattern</button>
+  </div>
+
+  <!-- Step 3: Result -->
+  <div class="card hidden" id="resultCard">
+    <div class="section-title">Your pattern</div>
+    <div class="section-sub">Pinch to zoom on the chart below. Each little cross is one stitch.</div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="statSize">—</div><div class="lbl">Stitches</div></div>
+      <div class="stat"><div class="num" id="statColors">—</div><div class="lbl">Colours</div></div>
+      <div class="stat"><div class="num" id="statFabric">—</div><div class="lbl">14ct size</div></div>
+    </div>
+
+    <canvas id="patternCanvas"></canvas>
+
+    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn secondary" id="printBtn" style="flex:1 1 100%;">Print pattern</button>
+      <button class="btn secondary" id="downloadBtn" style="flex:1;">Save chart image</button>
+      <button class="btn secondary" id="startOverBtn" style="flex:1;">New photo</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Thread list -->
+  <div class="card hidden" id="threadCard">
+    <div class="section-title">Skein list</div>
+    <div class="section-sub">DMC thread numbers, matched to the nearest industry-standard colour, with how much you'll need.</div>
+    <ul class="thread-list" id="threadList"></ul>
+  </div>
+
+  <footer>Made for counting threads, not pixels.</footer>
+</div>
+
+<script src="dmc_colors.js"></script>
+<script src="anchor_codes.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  let sourceImage = null;
+  let lastPatternData = null; // {grid, width, height, usedColors}
+
+  // ---------- Elements ----------
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
+  const photoPreview = document.getElementById('photoPreview');
+  const uploadCard = document.getElementById('uploadCard');
+  const settingsCard = document.getElementById('settingsCard');
+  const resultCard = document.getElementById('resultCard');
+  const threadCard = document.getElementById('threadCard');
+  const widthSlider = document.getElementById('widthSlider');
+  const widthVal = document.getElementById('widthVal');
+  const sizeHelp = document.getElementById('sizeHelp');
+  const colorSlider = document.getElementById('colorSlider');
+  const colorVal = document.getElementById('colorVal');
+  const generateBtn = document.getElementById('generateBtn');
+  const patternCanvas = document.getElementById('patternCanvas');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const startOverBtn = document.getElementById('startOverBtn');
+  const threadList = document.getElementById('threadList');
+  const statSize = document.getElementById('statSize');
+  const statColors = document.getElementById('statColors');
+  const statFabric = document.getElementById('statFabric');
+
+  // ---------- File handling ----------
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  function handleFile(file){
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        sourceImage = img;
+        photoPreview.src = e.target.result;
+        photoPreview.classList.remove('hidden');
+        settingsCard.classList.remove('hidden');
+        resultCard.classList.add('hidden');
+        threadCard.classList.add('hidden');
+        updateSizeHelp();
+        settingsCard.scrollIntoView({behavior:'smooth', block:'start'});
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Sliders ----------
+  function updateSizeHelp(){
+    const w = parseInt(widthSlider.value, 10);
+    const aspect = sourceImage ? sourceImage.height / sourceImage.width : 1;
+    const h = Math.round(w * aspect);
+    const inches14 = (w / 14).toFixed(1);
+    const inchesH14 = (h / 14).toFixed(1);
+    widthVal.textContent = w + ' stitches';
+    sizeHelp.textContent = `About ${w} × ${h} stitches — roughly ${inches14}" × ${inchesH14}" on standard 14-count aida.`;
+  }
+  widthSlider.addEventListener('input', updateSizeHelp);
+  colorSlider.addEventListener('input', () => {
+    colorVal.textContent = colorSlider.value + ' colours';
+  });
+
+  // ---------- Colour matching ----------
+  // Build a quick squared-distance nearest-match against the DMC palette.
+  function nearestDMC(r,g,b){
+    let best = null, bestDist = Infinity;
+    for (let i=0;i<DMC_PALETTE.length;i++){
+      const p = DMC_PALETTE[i].r;
+      const dr=r-p[0], dg=g-p[1], db=b-p[2];
+      const dist = dr*dr+dg*dg+db*db;
+      if (dist < bestDist){ bestDist = dist; best = DMC_PALETTE[i]; }
+    }
+    return best;
+  }
+
+  // K-means style reduction: cluster the image's sampled pixels into N groups,
+  // then map each cluster centre to the nearest real DMC colour. This keeps
+  // the *number of colours used* close to what the user asked for, rather
+  // than just nearest-matching every pixel independently (which tends to
+  // use far more distinct threads than requested).
+  function kMeansColors(pixels, k, iterations){
+    // pixels: array of [r,g,b]
+    // seed centroids by picking spaced-out samples
+    const centroids = [];
+    const step = Math.max(1, Math.floor(pixels.length / k));
+    for (let i=0; i<k && i*step < pixels.length; i++){
+      centroids.push(pixels[i*step].slice());
+    }
+    while (centroids.length < k) centroids.push(pixels[Math.floor(Math.random()*pixels.length)].slice());
+
+    let assignments = new Array(pixels.length).fill(0);
+    for (let iter=0; iter<iterations; iter++){
+      // assign
+      for (let i=0;i<pixels.length;i++){
+        let best=0, bestDist=Infinity;
+        for (let c=0;c<centroids.length;c++){
+          const cc = centroids[c];
+          const dr=pixels[i][0]-cc[0], dg=pixels[i][1]-cc[1], db=pixels[i][2]-cc[2];
+          const d=dr*dr+dg*dg+db*db;
+          if (d<bestDist){bestDist=d;best=c;}
+        }
+        assignments[i]=best;
+      }
+      // update
+      const sums = centroids.map(()=>[0,0,0,0]);
+      for (let i=0;i<pixels.length;i++){
+        const a=assignments[i], p=pixels[i];
+        sums[a][0]+=p[0]; sums[a][1]+=p[1]; sums[a][2]+=p[2]; sums[a][3]++;
+      }
+      for (let c=0;c<centroids.length;c++){
+        if (sums[c][3]>0){
+          centroids[c]=[sums[c][0]/sums[c][3], sums[c][1]/sums[c][3], sums[c][2]/sums[c][3]];
+        }
+      }
+    }
+    return centroids;
+  }
+
+  // ---------- Pattern generation ----------
+  generateBtn.addEventListener('click', () => {
+    if (!sourceImage) return;
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner"></span>Generating…';
+    // Defer to next tick so the spinner can paint before the heavy work runs
+    setTimeout(() => {
+      try {
+        generatePattern();
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate pattern';
+      }
+    }, 30);
+  });
+
+  function generatePattern(){
+    const targetW = parseInt(widthSlider.value, 10);
+    const targetColors = parseInt(colorSlider.value, 10);
+    const aspect = sourceImage.height / sourceImage.width;
+    const targetH = Math.max(1, Math.round(targetW * aspect));
+
+    // Downsample the source image to the stitch grid resolution
+    const sampleCanvas = document.createElement('canvas');
+    sampleCanvas.width = targetW;
+    sampleCanvas.height = targetH;
+    const sctx = sampleCanvas.getContext('2d');
+    sctx.imageSmoothingEnabled = true;
+    sctx.drawImage(sourceImage, 0, 0, targetW, targetH);
+    const imgData = sctx.getImageData(0, 0, targetW, targetH).data;
+
+    const pixels = [];
+    for (let i=0; i<imgData.length; i+=4){
+      pixels.push([imgData[i], imgData[i+1], imgData[i+2]]);
+    }
+
+    // Reduce to the requested number of colour clusters, then snap each
+    // cluster centre to the nearest real DMC thread colour.
+    const k = Math.min(targetColors, pixels.length);
+    const centroids = kMeansColors(pixels, k, 6);
+    const centroidToDMC = centroids.map(c => nearestDMC(c[0], c[1], c[2]));
+
+    // Re-assign every pixel to its nearest centroid, then to that centroid's DMC colour
+    const grid = new Array(targetW * targetH);
+    const usedCounts = {}; // dmc code -> stitch count
+    for (let i=0;i<pixels.length;i++){
+      let best=0, bestDist=Infinity;
+      for (let c=0;c<centroids.length;c++){
+        const cc=centroids[c];
+        const dr=pixels[i][0]-cc[0], dg=pixels[i][1]-cc[1], db=pixels[i][2]-cc[2];
+        const d=dr*dr+dg*dg+db*db;
+        if (d<bestDist){bestDist=d;best=c;}
+      }
+      const dmc = centroidToDMC[best];
+      grid[i] = dmc;
+      usedCounts[dmc.c] = (usedCounts[dmc.c]||0) + 1;
+    }
+
+    lastPatternData = { grid, width: targetW, height: targetH, usedCounts };
+    renderPatternCanvas(lastPatternData);
+    renderThreadList(lastPatternData);
+    renderStats(lastPatternData);
+
+    resultCard.classList.remove('hidden');
+    threadCard.classList.remove('hidden');
+    resultCard.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // ---------- Rendering ----------
+  function renderStats(data){
+    statSize.textContent = data.width + '×' + data.height;
+    statColors.textContent = Object.keys(data.usedCounts).length;
+    const inchesW = (data.width/14).toFixed(1);
+    const inchesH = (data.height/14).toFixed(1);
+    statFabric.textContent = inchesW + '"×' + inchesH + '"';
+  }
+
+  function renderPatternCanvas(data){
+    const cellSize = 8; // px per stitch at native resolution; CSS scales it down responsively
+    const w = data.width, h = data.height;
+    patternCanvas.width = w * cellSize;
+    patternCanvas.height = h * cellSize;
+    const ctx = patternCanvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,patternCanvas.width, patternCanvas.height);
+
+    // Draw each stitch as a filled square with a small cross motif,
+    // so the chart visually reads as cross-stitch rather than a flat mosaic.
+    for (let y=0;y<h;y++){
+      for (let x=0;x<w;x++){
+        const dmc = data.grid[y*w+x];
+        const px = x*cellSize, py = y*cellSize;
+        ctx.fillStyle = `rgb(${dmc.r[0]},${dmc.r[1]},${dmc.r[2]})`;
+        ctx.fillRect(px, py, cellSize, cellSize);
+      }
+    }
+
+    // Light grid lines every stitch, heavier every 10 (standard chart convention)
+    ctx.strokeStyle = 'rgba(43,58,74,0.12)';
+    ctx.lineWidth = 1;
+    for (let x=0;x<=w;x++){
+      ctx.beginPath();
+      ctx.moveTo(x*cellSize+0.5, 0);
+      ctx.lineTo(x*cellSize+0.5, h*cellSize);
+      ctx.stroke();
+    }
+    for (let y=0;y<=h;y++){
+      ctx.beginPath();
+      ctx.moveTo(0, y*cellSize+0.5);
+      ctx.lineTo(w*cellSize, y*cellSize+0.5);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(43,58,74,0.35)';
+    ctx.lineWidth = 1.5;
+    for (let x=0;x<=w;x+=10){
+      ctx.beginPath();
+      ctx.moveTo(x*cellSize+0.5, 0);
+      ctx.lineTo(x*cellSize+0.5, h*cellSize);
+      ctx.stroke();
+    }
+    for (let y=0;y<=h;y+=10){
+      ctx.beginPath();
+      ctx.moveTo(0, y*cellSize+0.5);
+      ctx.lineTo(w*cellSize, y*cellSize+0.5);
+      ctx.stroke();
+    }
+  }
+
+  function renderThreadList(data){
+    // Sort by usage, most-used first
+    const entries = Object.entries(data.usedCounts).sort((a,b)=>b[1]-a[1]);
+    threadList.innerHTML = '';
+    entries.forEach(([code, count]) => {
+      const dmc = DMC_PALETTE.find(c => c.c === code);
+      if (!dmc) return;
+      // Rough thread length estimate: one full cross stitch on 14-count
+      // aida uses about 8.5 inches (≈21.5cm) of 6-strand floss per stitch,
+      // which is the figure commonly used by cross-stitch chart software.
+      const inchesNeeded = count * 8.5;
+      const skeinLengthInches = 8.7 * 12; // a standard DMC skein is ~8.7 yards
+      const skeinsNeeded = Math.max(1, Math.ceil(inchesNeeded / skeinLengthInches));
+
+      const li = document.createElement('li');
+      const anchorCode = DMC_TO_ANCHOR[dmc.c];
+      li.innerHTML = `
+        <div class="swatch" style="background:rgb(${dmc.r[0]},${dmc.r[1]},${dmc.r[2]})"></div>
+        <div class="thread-info">
+          <div class="thread-code">DMC ${dmc.c}${anchorCode ? ` <span style="color:#857c6c;font-weight:400;">· Anchor ${anchorCode}</span>` : ''}</div>
+          <div class="thread-name">${dmc.n}</div>
+        </div>
+        <div class="thread-amount">
+          ${count.toLocaleString()} stitches
+          <span class="small">${skeinsNeeded} skein${skeinsNeeded>1?'s':''}</span>
+        </div>
+      `;
+      threadList.appendChild(li);
+    });
+  }
+
+  // ---------- Print ----------
+  // Printing the on-screen canvas directly looks bad: ink-heavy colour fills,
+  // no way to tell similar shades apart in black-and-white, and no legend.
+  // Instead we build a dedicated print view: each stitch gets a small
+  // symbol (so it's stitchable even on a black-and-white printer) plus a
+  // colour key underneath. Large patterns are split across multiple pages.
+  const STITCH_SYMBOLS = '●▲■◆○△□◇✦✧★☆▼▽◀▷◁▶✚✜✱✳❖⬟⬠⬡⬢▣▤▥▦▧▨▩'.split('');
+
+  function buildSymbolMap(dmcCodesUsed){
+    const map = {};
+    dmcCodesUsed.forEach((code, i) => {
+      map[code] = STITCH_SYMBOLS[i % STITCH_SYMBOLS.length];
+    });
+    return map;
+  }
+
+  document.getElementById('printBtn').addEventListener('click', () => {
+    if (!lastPatternData) return;
+    const data = lastPatternData;
+    const codesUsed = Object.keys(data.usedCounts).sort((a,b)=>data.usedCounts[b]-data.usedCounts[a]);
+    const symbolMap = buildSymbolMap(codesUsed);
+
+    // Fit the whole chart onto a single printable page by shrinking the
+    // cell size to match the pattern's dimensions, rather than splitting
+    // across several fixed-size pages. A standard page has a printable
+    // area of roughly 190mm × 270mm after margins; below about 2.2mm a
+    // stitch symbol becomes too small to read or count accurately, so
+    // below that point we say so rather than print something useless.
+    const PRINTABLE_MM_W = 190;
+    const PRINTABLE_MM_H = 250; // leaves room for the title/meta line
+    const MIN_LEGIBLE_CELL_MM = 2.2;
+
+    const cellMmByWidth = PRINTABLE_MM_W / data.width;
+    const cellMmByHeight = PRINTABLE_MM_H / data.height;
+    const cellMm = Math.min(cellMmByWidth, cellMmByHeight);
+    const tooSmall = cellMm < MIN_LEGIBLE_CELL_MM;
+
+    if (tooSmall) {
+      const ok = confirm(
+        `This pattern is ${data.width}×${data.height} stitches — too large to fit on one ` +
+        `readable page (each stitch would print smaller than ${cellMm.toFixed(1)}mm, too small ` +
+        `to count or see the symbol in).\n\nYou can still print it this way, but it won't be ` +
+        `stitchable from. For a usable chart, either reduce the pattern width in step 2 and ` +
+        `regenerate, or continue and it will print across multiple legible pages instead.\n\n` +
+        `Press OK to print across multiple pages (recommended), or Cancel to go back and reduce the size.`
+      );
+      if (!ok) return;
+    }
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      alert('Please allow pop-ups to print the pattern.');
+      return;
+    }
+
+    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cross Stitch My Picture — Pattern</title>
+    <style>
+      body{font-family:Georgia,serif; margin:0; padding:0; color:#222;}
+      .page{page-break-after:always; padding:10mm;}
+      .page:last-child{page-break-after:auto;}
+      h1{font-size:16px; margin:0 0 4px;}
+      .meta{font-size:11px; color:#555; margin-bottom:10px;}
+      table.chart{border-collapse:collapse;}
+      table.chart td{
+        text-align:center; vertical-align:middle;
+        border:0.5px solid #ddd; padding:0; line-height:1;
+      }
+      table.chart td.tens-right{border-right:1.5px solid #888;}
+      table.chart tr.tens-bottom td{border-bottom:1.5px solid #888;}
+      .legend{margin-top:10px; font-size:12px;}
+      .legend table{border-collapse:collapse; width:100%;}
+      .legend td{padding:3px 8px; border-bottom:1px solid #eee;}
+      .legend .sym{font-size:14px; width:24px; text-align:center;}
+      @media print { .page{padding:8mm;} }
+    </style></head><body>`;
+
+    if (!tooSmall) {
+      // Everything fits on one page at a legible size.
+      const cellPx = cellMm * 3.7795; // mm -> px at 96dpi, close enough for screen+print
+      const fontPx = Math.max(6, cellPx * 0.62);
+      html += `<div class="page">
+        <h1>Cross Stitch My Picture</h1>
+        <div class="meta">${data.width}×${data.height} stitches — full chart, page 1 of 2</div>
+        <table class="chart" style="font-size:${fontPx}px;">`;
+      for (let y = 0; y < data.height; y++){
+        const rowClass = ((y+1) % 10 === 0) ? ' class="tens-bottom"' : '';
+        html += `<tr${rowClass}>`;
+        for (let x = 0; x < data.width; x++){
+          const dmc = data.grid[y*data.width+x];
+          const cellClass = ((x+1) % 10 === 0) ? ' class="tens-right"' : '';
+          html += `<td${cellClass} style="width:${cellPx}px;height:${cellPx}px;background:rgb(${dmc.r[0]},${dmc.r[1]},${dmc.r[2]})">${symbolMap[dmc.c]}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</table></div>`;
+    } else {
+      // Fall back to a multi-page chart. Rather than slicing at a FIXED
+      // page size (which leaves a thin sliver row/column on the last page
+      // whenever the pattern doesn't divide evenly — the "one line on
+      // every other page" problem), we first work out the minimum number
+      // of pages needed at a legible cell size, then divide the pattern
+      // EVENLY across that many pages so every page carries a similar
+      // amount of the chart.
+      const MAX_PAGE_STITCHES_W = 50; // upper bound per page at a legible size
+      const MAX_PAGE_STITCHES_H = 65;
+      const pagesX = Math.max(1, Math.ceil(data.width / MAX_PAGE_STITCHES_W));
+      const pagesY = Math.max(1, Math.ceil(data.height / MAX_PAGE_STITCHES_H));
+      // Evenly-sized column/row boundaries (e.g. 187 stitches over 4 pages
+      // gives page widths of 47,47,47,46 — never a lone sliver page).
+      const colBounds = Array.from({length: pagesX+1}, (_, i) => Math.round(i * data.width / pagesX));
+      const rowBounds = Array.from({length: pagesY+1}, (_, i) => Math.round(i * data.height / pagesY));
+
+      for (let py = 0; py < pagesY; py++){
+        for (let px = 0; px < pagesX; px++){
+          const x0 = colBounds[px], x1 = colBounds[px+1];
+          const y0 = rowBounds[py], y1 = rowBounds[py+1];
+          html += `<div class="page">
+            <h1>Cross Stitch My Picture</h1>
+            <div class="meta">Chart page ${py*pagesX+px+1} of ${pagesX*pagesY} — stitches ${x0+1}-${x1} × ${y0+1}-${y1} of ${data.width}×${data.height}</div>
+            <table class="chart">`;
+          for (let y = y0; y < y1; y++){
+            const rowClass = ((y+1) % 10 === 0) ? ' class="tens-bottom"' : '';
+            html += `<tr${rowClass}>`;
+            for (let x = x0; x < x1; x++){
+              const dmc = data.grid[y*data.width+x];
+              const cellClass = ((x+1) % 10 === 0) ? ' class="tens-right"' : '';
+              html += `<td${cellClass} style="width:14px;height:14px;font-size:9px;background:rgb(${dmc.r[0]},${dmc.r[1]},${dmc.r[2]})">${symbolMap[dmc.c]}</td>`;
+            }
+            html += `</tr>`;
+          }
+          html += `</table></div>`;
+        }
+      }
+    }
+
+    // Final legend page
+    html += `<div class="page"><h1>Colour key</h1><div class="meta">${tooSmall ? '' : 'Page 2 of 2 — '}${codesUsed.length} DMC thread colours</div><div class="legend"><table>`;
+    codesUsed.forEach(code => {
+      const dmc = DMC_PALETTE.find(c => c.c === code);
+      const anchorCode = DMC_TO_ANCHOR[code];
+      html += `<tr>
+        <td class="sym">${symbolMap[code]}</td>
+        <td style="background:rgb(${dmc.r[0]},${dmc.r[1]},${dmc.r[2]});width:24px;"></td>
+        <td><b>DMC ${dmc.c}</b>${anchorCode ? ` <span style="color:#777;">(Anchor ${anchorCode})</span>` : ''} — ${dmc.n}</td>
+        <td>${data.usedCounts[code].toLocaleString()} stitches</td>
+      </tr>`;
+    });
+    html += `</table></div></div>`;
+
+    html += `</body></html>`;
+    printWin.document.write(html);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => printWin.print(), 300);
+  });
+
+  // ---------- Buttons ----------
+  downloadBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'cross-stitch-pattern.png';
+    link.href = patternCanvas.toDataURL('image/png');
+    link.click();
+  });
+
+  startOverBtn.addEventListener('click', () => {
+    sourceImage = null;
+    fileInput.value = '';
+    photoPreview.classList.add('hidden');
+    settingsCard.classList.add('hidden');
+    resultCard.classList.add('hidden');
+    threadCard.classList.add('hidden');
+    uploadCard.scrollIntoView({behavior:'smooth'});
+  });
+
+  // ---------- Install banner (iOS Safari only, since that's the only
+  // platform without an automatic install prompt) ----------
+  function isIos(){
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+  function isInStandaloneMode(){
+    return ('standalone' in window.navigator) && (window.navigator.standalone);
+  }
+  if (isIos() && !isInStandaloneMode()){
+    document.getElementById('installBanner').classList.add('show');
+  }
+
+  // ---------- Service worker for offline support ----------
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
